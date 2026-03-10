@@ -52,17 +52,17 @@ class SDLTCalculator:
 
     def __init__(self):
         self.bands = [
-            TaxBand(0,         125_000,   0.00),  # 0%
-            TaxBand(125_000,   250_000,   0.02),  # 2%
-            TaxBand(250_000,   925_000,   0.05),  # 5%
-            TaxBand(925_000,   1_500_000, 0.10),  # 10%
-            TaxBand(1_500_000, None,      0.12),  # 12%
         ]
+
+    def addBand(self, lower: int, upper: int | None, rate: float):
+        self.bands.append(TaxBand(lower, upper, rate))
 
     def calculate(self, price: int) -> SDLTResult:
         """Calculate SDLT for a given property price."""
         if not isinstance(price, int) or price < 0:
             raise ValueError("Price must be a non-negative integer.")
+        if not len(self.bands):
+            raise ValueError("No tax bands have been initialized.")
 
         breakdown = [
             {"band": str(band), "tax": band.calculate(price)}
@@ -74,10 +74,21 @@ class SDLTCalculator:
         return SDLTResult(price, breakdown, total)
 
 
+class DefaultSDLTCalculator(SDLTCalculator):
+    def __init__(self):
+        self.bands = [
+            TaxBand(0,         125_000,   0.00),  # 0%
+            TaxBand(125_000,   250_000,   0.02),  # 2%
+            TaxBand(250_000,   925_000,   0.05),  # 5%
+            TaxBand(925_000,   1_500_000, 0.10),  # 10%
+            TaxBand(1_500_000, None,      0.12),  # 12%
+        ]
+
+
 # ── Run ──────────────────────────────────────────────
 
 if __name__ == "__main__":
-    calculator = SDLTCalculator()
+    calculator = DefaultSDLTCalculator()
 
     # Example from the brief
     calculator.calculate(295_000).print()
@@ -87,3 +98,20 @@ if __name__ == "__main__":
     calculator.calculate(500_000).print()
     calculator.calculate(1_000_000).print()
     calculator.calculate(2_000_000).print()
+
+    newCalc = SDLTCalculator()
+
+    newCalc.addBand(0, 125_000, 0.0)
+    newCalc.addBand(125_000, 250_000, 0.02)
+    newCalc.addBand(250_000, 925_000, 0.05)
+    newCalc.addBand(925_000, 1_500_000, 0.10)
+    newCalc.addBand(1_500_000, None, 0.12)
+
+    # Example from the brief
+    newCalc.calculate(295_000).print()
+
+    # Additional examples
+    newCalc.calculate(125_000).print()
+    newCalc.calculate(500_000).print()
+    newCalc.calculate(1_000_000).print()
+    newCalc.calculate(2_000_000).print()
